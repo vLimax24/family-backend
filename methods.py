@@ -13,23 +13,15 @@ def ensure_not_empty(text, name="value"):
         raise ValueError(f"{name} must not be empty.")
 
 
-def ensure_person_exists(person_id):
-    cursor.execute("SELECT id FROM person WHERE id = ?", (person_id,))
+def ensure_exists(table, item_id, label):
+    cursor.execute(f"SELECT id FROM {table} WHERE id = ?", (item_id,))
     if cursor.fetchone() is None:
-        raise ValueError(f"Person with id={person_id} does not exist.")
+        raise ValueError(f"{label} with id={item_id} does not exist.")
 
 
-def ensure_plant_exists(plant_id):
-    cursor.execute("SELECT id FROM plant WHERE id = ?", (plant_id,))
-    if cursor.fetchone() is None:
-        raise ValueError(f"Plant with id={plant_id} does not exist.")
-
-
-def ensure_chore_exists(chore_id):
-    cursor.execute("SELECT id FROM chore WHERE id = ?", (chore_id,))
-    if cursor.fetchone() is None:
-        raise ValueError(f"Chore with id={chore_id} does not exist.")
-
+def ensure_person_exists(person_id): ensure_exists("person", person_id, "Person")
+def ensure_plant_exists(plant_id):   ensure_exists("plant", plant_id, "Plant")
+def ensure_chore_exists(chore_id):   ensure_exists("chore", chore_id, "Chore")
 
 
 # ---------- PERSON METHODS ----------
@@ -39,13 +31,12 @@ def getPersonById(person_id):
     ensure_person_exists(person_id)
 
     cursor.execute("SELECT * FROM person WHERE id = ?", (person_id,))
-    return cursor.fetchone()
+    return cursor.fetchone()   # always one row
 
 
 def getAllPersons():
     cursor.execute("SELECT * FROM person")
     return cursor.fetchall()
-
 
 
 # ---------- CHORE METHODS ----------
@@ -79,7 +70,9 @@ def markChoreDone(chore_id):
         SET last_done = CAST(strftime('%s','now') AS INTEGER)
         WHERE id = ?
     """, (chore_id,))
+
     connection.commit()
+    return cursor.rowcount > 0
 
 
 def addChore(name, interval, worker_id):
@@ -104,6 +97,7 @@ def removeChore(chore_id):
     cursor.execute("DELETE FROM chore WHERE id = ?", (chore_id,))
     connection.commit()
 
+    return cursor.rowcount > 0
 
 
 # ---------- PLANT METHODS ----------
@@ -137,7 +131,9 @@ def markPlantWatered(plant_id):
         SET last_pour = CAST(strftime('%s','now') AS INTEGER)
         WHERE id = ?
     """, (plant_id,))
+
     connection.commit()
+    return cursor.rowcount > 0
 
 
 def addPlant(name, interval, owner_id, image=None):
@@ -162,6 +158,7 @@ def removePlant(plant_id):
     cursor.execute("DELETE FROM plant WHERE id = ?", (plant_id,))
     connection.commit()
 
+    return cursor.rowcount > 0
 
 
 # ---------- SERVICE METHOD ----------
